@@ -11,11 +11,11 @@ void writeChar(char c);
 int main() {
     writeString("Hello World!\0");
 
-    while(1) {}
+    while (1) {}
     return 0;
 }
 
-void writeString(char* str) {    
+void writeString(char* str) {
     int index = 0;
     while (1) {
         if (str[index] == '\0') {
