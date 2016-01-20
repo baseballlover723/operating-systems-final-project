@@ -1,14 +1,24 @@
 /* Morgan Cook, Josh Green, Philip Ross Milestone 1
-team 1-F
-*/
+   team 1-F
+   */
 
 int PRINT_INTERRUPT = 0x10;
-char ah = 0xe;
+int READ_CHAR_INTERRUPT = 0x16;
+
 
 void printString(char str[]);
 void printChar(char c);
+int readChar();
+void readString(char str[]);
+
 int main() {
-    printString("Hello World!\0");
+    char line[80];
+    printString("Hello World!");
+    printString("After");
+    printString("Enter a line: ");
+    readString(&line);
+    printString(line);
+
 
     while (1) {}
     return 0;
@@ -23,9 +33,39 @@ void printString(char* str) {
         printChar(str[index]);
         index++;
     }
+    return;
 }
 
 void printChar(char c) {
-    interrupt(PRINT_INTERRUPT, ah * 256 + c, 0, 0, 0);
+    interrupt(PRINT_INTERRUPT, 0xe * 256 + c, 0, 0, 0);
 }
+
+int readChar() {
+    return interrupt(READ_CHAR_INTERRUPT, 0, 0, 0, 0);
+}
+
+void readString(char* str[]) {
+    int index = 0;
+    while (1) {
+        int readCharChar = readChar();
+        printChar(readCharChar);
+        if (readCharChar == 0x8) {
+            *str[index] = '\0';
+            if (index > 0) {
+                index--;
+            }
+        } else {
+            *str[index] = readCharChar;
+            index++;
+        }
+        if (index <= sizeof(*str) - 2 || readCharChar == 0xd) {
+            printString("\ndone");
+            *str[index + 1] = 0xa;
+            *str[index + 2] = 0x0;
+            break;
+        }
+    }
+}
+
+
 
