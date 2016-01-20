@@ -19,11 +19,12 @@ void handleInterrupt21(int ax, int bx, int cx, int dx);
 int main() {    
     char line[80];
     char buffer[512];
+    char buffer2[512];
     printString("Hello World!");
     
     newline();
     
-    printString("Enter a line: ");
+    printString("Enter a line to test read and print string: ");
     readString(line);
     printString(line);
     
@@ -34,9 +35,11 @@ int main() {
     
     newline();
 
+    printString("Enter a line to test interrupt21: ");
     makeInterrupt21();
-    interrupt(0x21,3,line,2,0);
-    /*interrupt(0x21,0,line,0,0);*/
+    interrupt(0x21,1,line,2,0);
+    interrupt(0x21,0,line,2,0);
+    interrupt(0x21,2,buffer2,30,0);
 
     newline();
 
@@ -124,15 +127,14 @@ void readSector(char* buffer, int sector) {
 
 void handleInterrupt21(int ax, int bx, int cx, int dx) {
     if (ax == 0) {
-        printString("ax is 0");
+        printString(bx);
     } else if(ax ==1) {
-        printString("ax is 1");
         readString(bx);
     } else if(ax == 2) {
-        //TODO: read sector
-        printString("ax is 2");
+        readSector(bx, cx);
+        printString(bx);
     } else if(ax >= 3) {
-        printString("Error -> First parameter must be less than three");
+        printString("Error -> First parameter must be less than three!");
     }
 
 }
