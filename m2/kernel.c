@@ -13,8 +13,10 @@ void readString(char str[]);
 
 int main() {
     char line[80];
-    printString("Hello World!");
-    printString("After");
+    line[0] = "m";
+    line[1] = "o";
+    line[2] = "r";
+    printString("Hello World!\n");
     printString("Enter a line: ");
     readString(line);
     printString(line);
