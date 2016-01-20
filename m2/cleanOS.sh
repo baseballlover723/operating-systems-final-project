@@ -5,3 +5,4 @@ rm bootload
 rm kernel
 rm kernel_asm.o
 rm kernel.o
+rm bochsout.txt
