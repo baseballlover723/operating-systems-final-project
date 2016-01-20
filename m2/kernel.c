@@ -1,4 +1,4 @@
-/* Morgan Cook, Josh Green, Philip Ross Milestone 1
+/* Morgan Cook, Josh Green, Philip Ross Milestone 2
    team 1-F
    */
 
@@ -10,33 +10,57 @@ void printString(char str[]);
 void printChar(char c);
 int readChar();
 void readString(char str[]);
+void readSector(char* buffer, int sector);
+int mod(a, b);
+int div(a, b);
+void newline();
 void handleInterrupt21(int ax, int bx, int cx, int dx);
 
 int main() {
     char line[80];
-    line[0] = "m";
-    line[1] = "o";
-    line[2] = "r";
-    printString("Hello World!\n");
+    char buffer[512];
+    printString("Hello World!");
+    
+    newline();
+    
     printString("Enter a line: ");
     readString(line);
     printString(line);
+    
+    newline(); 
+    
+    readSector(buffer, 30);
+    printString(buffer);
+    
+    newline();
+
     handleInterrupt21(0, 0, 0, 0);
     interrupt(0x21, 0, 0, 0, 0);
 
+    newline();
 
+    printString("End of program");
     while (1) {}
     return 0;
 }
+
+void newline() {
+    printString("\n****\n\n");
+} 
 
 void printString(char* str) {
     int index = 0;
     while (1) {
         if (str[index] == '\0') {
             break;
+        } else if (str[index] == '\n') {
+            printChar(0xa);
+            printChar(0xd);
+        } else {
+            printChar(str[index]);
         }
-        printChar(str[index]);
         index++;
+        
     }
     return;
 }
@@ -74,9 +98,30 @@ void readString(char str[]) {
     }
 }
 
+int mod(int a, int b) {
+    while (a >= b) {
+        a = a - b;
+    }
+    return a;
+}
+
+int div(a, b) {
+    int quotient = 0;
+    while ((quotient  + 1)* b  <= a) {
+        quotient  = quotient  + 1;
+    }
+    return quotient;
+}
+
+void readSector(char* buffer, int sector) {
+    int ax = 2 * 256 + 1;
+    int bx = buffer;
+    int cx = div(sector, 36) * 256 + mod(sector, 18) + 1;
+    int dx = mod(div(sector, 18), 2) * 256;
+    interrupt(0x13, ax, bx, cx, dx);
+}
+
 void handleInterrupt21(int ax, int bx, int cx, int dx) {
     printString("This is interrupt handler 21");
 }
-
-
 
