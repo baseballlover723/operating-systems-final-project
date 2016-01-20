@@ -10,6 +10,7 @@ void printString(char str[]);
 void printChar(char c);
 int readChar();
 void readString(char str[]);
+void handleInterrupt21(int ax, int bx, int cx, int dx);
 
 int main() {
     char line[80];
@@ -20,6 +21,8 @@ int main() {
     printString("Enter a line: ");
     readString(line);
     printString(line);
+    handleInterrupt21(0, 0, 0, 0);
+    interrupt(0x21, 0, 0, 0, 0);
 
 
     while (1) {}
@@ -69,6 +72,10 @@ void readString(char str[]) {
             break;
         }
     }
+}
+
+void handleInterrupt21(int ax, int bx, int cx, int dx) {
+    printString("This is interrupt handler 21");
 }
 
 

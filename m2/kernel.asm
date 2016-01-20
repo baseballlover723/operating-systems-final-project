@@ -6,7 +6,7 @@
 	.global _putInMemory
 	.global _interrupt
 	.global _makeInterrupt21
-;	.extern _handleInterrupt21
+	.extern _handleInterrupt21
 
 ;void putInMemory (int segment, int address, char character)
 _putInMemory:
@@ -70,10 +70,10 @@ _interrupt21ServiceRoutine:
 ;	push cx
 ;	push bx
 ;	push ax
-;	call _handleInterrupt21
-;	pop ax
-;	pop bx
-;	pop cx
-;	pop dx
+	call _handleInterrupt21
+	pop ax
+	pop bx
+	pop cx
+	pop dx
 
-;	iret
+	iret
