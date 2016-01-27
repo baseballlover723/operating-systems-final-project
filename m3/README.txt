@@ -11,3 +11,18 @@ Any bugs or deficiencies:
 
 Additional features:
   -We have not yet added any extra features.
+
+### MILESTONE 3 ###
+
+What we did: In this milestone, we implemented the file system for out operating system, created
+3 new services for interrupt 21 (readFile, executeProgram, and terminate), and added a shell with
+two implemented commands.
+
+How to verify: To run our operating system, type "./compileOS.sh" into the terminal. This will 
+compile all necessary files, construct the floppya.img, load certain files into the img, and run
+bochs. On execution, the OS will print out "SHELL>" and wait for input. recognized commands are
+"type [filename]" and "execute [filename]" To verify the readFile interrupt, enter "type messag"
+into the shell. This will read the message.txt file and output its contents. To verify the 
+executeCommand interrupt, enter "execute tstpr2" into the shell. This will execute the tstpr2 file,
+and you will see a message displayed to the console. To verify the shell, simply type any incorrect
+command, and the shell will handle that appropriately.
