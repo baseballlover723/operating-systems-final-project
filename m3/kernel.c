@@ -41,13 +41,16 @@ int main() {
 
           newline();
 
-*/
-    char buffer[13312];  /* this is the maximum size of a file */
-    makeInterrupt21();
 
-    interrupt(0x21, 3, "messag\0", buffer, 0);  /* read the file into buffer */
-    interrupt(0x21, 0, buffer, 0, 0);      /* print out the file */
-    /*interrupt(0x21, 4, "tstprg\0", 0x2000, 0);*/
+          char buffer[13312];
+          makeInterrupt21();
+
+          interrupt(0x21, 3, "messag\0", buffer, 0); 
+          interrupt(0x21, 0, buffer, 0, 0);     
+          newline();
+          */
+    makeInterrupt21();
+    interrupt(0x21, 4, "tstprg\0", 0x2000, 0);
     printString("\nEnd of program");
     while (1) {}
     return 0;
@@ -155,12 +158,10 @@ void readFile(char* fileName, char* buffer) {
     char* directory;
     char sectorNumbs[26];
     int offset;
-    /*directory = buffer; */
     readSector(buffer, 2);
-    
+
     for (index = 0; index < 16; index++) {
         offset = index * 32;
-        /*directory += index * 32;*/
         matches = 1;
         for (i = 0; i<6; i++) {
             if (buffer[i + offset] != fileName[i]) {
@@ -169,36 +170,43 @@ void readFile(char* fileName, char* buffer) {
             }
         }
         if (matches) {
-            for (i = 0; i < 26; i++) {
-                sectorNumbs[i] = buffer[i + offset + 6];
-            }
-            sectorNumb = 0;
-            for (i=0; sectorNumbs[i] != 0x00; i++) {
-                sectorNumb = sectorNumbs[i];
-                readSector(buffer, sectorNumb);
-                buffer += 512;
-            }
             break;
-            /*printString(buffer);*/
         }
-    }    
+    }
+    if (!matches) {
+        return;
+    }
+    for (i = 0; i < 26; i++) {
+        sectorNumbs[i] = buffer[i + offset + 6];
+    }
+    sectorNumb = 0;
+    for (i=0; sectorNumbs[i] != 0x00; i++) {
+        sectorNumb = sectorNumbs[i];
+        readSector(buffer, sectorNumb);
+        buffer += 512;
+    }
+    break;
+    /*printString(buffer);*/
 }
 
 void executeProgram(char* name, int segment) {
     int i = 0;
     char currChar;
     char buffer[13312];
+    if (segment == 0x2000) {
+        printString("segment is 0x2000\n");
+    }
     readFile(name, buffer);
     printString(buffer);
-
-
-    while(1) {
-        if(buffer[i] == "\0") {
+    printString("\n");
+    for (i = 0; i < 13312; i++) {
+        printChar(buffer[i]);
+        putInMemory(segment, i, buffer[i]);    
+        if (buffer[i] == 0xFF) {
             break;
         }
-        putInMemory(segment, segment + i, buffer[i]);
-        i++;
     }
+    printString("finished loop");
     launchProgram(segment);
 }
 
