@@ -13,7 +13,7 @@
 #define MAX_COMMAND_SIZE 80
 
 #define SHELL_OUT "SHELL>"
-#define BAD_COMMAND "Invalid command"
+#define BAD_COMMAND "\nInvalid command\n"
 
 #define TYPE_COMMAND "type"
 
@@ -26,8 +26,8 @@ int main() {
     interrupt(0x21, READ_STRING, command, 0, 0);
     if (!executeCommand(command)) {
       interrupt(0x21, PRINT_STRING, BAD_COMMAND, 0, 0);
-      interrupt(0x21, TERMINATE, 0, 0, 0);
-    }
+     /* interrupt(0x21, TERMINATE, 0, 0, 0);
+    */}
   }
 }
 

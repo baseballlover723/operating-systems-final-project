@@ -127,31 +127,25 @@ void readFile(char* fileName, char* buffer) {
     int i;
     int matches;
     int sectorNumb;
-    char* directory;
-    char sectorNumbs[26];
-    int offset;
-    readSector(buffer, 2);
+    char directory[512];
+    readSector(directory, 2);
     
-    for (index = 0; index < 16; index++) {
-        offset = index * 32;
+    for (index = 0; index < 512; index += 32) {
         matches = 1;
         for (i = 0; i<6; i++) {
-            if (buffer[i + offset] != fileName[i]) {
+            if (directory[i + index] != fileName[i]) {
                 matches = 0;
                 break;
             }
         }
         if (matches) {
-            for (i = 0; i < 26; i++) {
-                sectorNumbs[i] = buffer[i + offset + 6];
+            for (i=0; directory[6 + index + i] != 0x00; i++) {
+                printString("read sector ");
+                printhex(directory[6+index+i]);
+                printString("\n");
+                readSector(buffer + 512 * i, directory[6 + index + i]);
             }
-            sectorNumb = 0;
-            for (i=0; sectorNumbs[i] != 0x00; i++) {
-                sectorNumb = sectorNumbs[i];
-                readSector(buffer, sectorNumb);
-                buffer += 512;
-            }
-            break;
+            return;
             /*printString(buffer);*/
         }
     }    
