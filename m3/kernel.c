@@ -42,13 +42,13 @@ int main() {
           newline();
 
 
-          char buffer[13312];
-          makeInterrupt21();
+    char buffer[13312];
+    makeInterrupt21();
 
-          interrupt(0x21, 3, "messag\0", buffer, 0); 
-          interrupt(0x21, 0, buffer, 0, 0);     
-          newline();
-          */
+    interrupt(0x21, 3, "messag\0", buffer, 0); 
+    interrupt(0x21, 0, buffer, 0, 0);     
+    newline();
+*/
     makeInterrupt21();
     interrupt(0x21, 4, "tstprg\0", 0x2000, 0);
     printString("\nEnd of program");
@@ -159,7 +159,7 @@ void readFile(char* fileName, char* buffer) {
     char sectorNumbs[26];
     int offset;
     readSector(buffer, 2);
-
+    
     for (index = 0; index < 16; index++) {
         offset = index * 32;
         matches = 1;
@@ -170,23 +170,19 @@ void readFile(char* fileName, char* buffer) {
             }
         }
         if (matches) {
+            for (i = 0; i < 26; i++) {
+                sectorNumbs[i] = buffer[i + offset + 6];
+            }
+            sectorNumb = 0;
+            for (i=0; sectorNumbs[i] != 0x00; i++) {
+                sectorNumb = sectorNumbs[i];
+                readSector(buffer, sectorNumb);
+                buffer += 512;
+            }
             break;
+            /*printString(buffer);*/
         }
-    }
-    if (!matches) {
-        return;
-    }
-    for (i = 0; i < 26; i++) {
-        sectorNumbs[i] = buffer[i + offset + 6];
-    }
-    sectorNumb = 0;
-    for (i=0; sectorNumbs[i] != 0x00; i++) {
-        sectorNumb = sectorNumbs[i];
-        readSector(buffer, sectorNumb);
-        buffer += 512;
-    }
-    break;
-    /*printString(buffer);*/
+    }    
 }
 
 void executeProgram(char* name, int segment) {
@@ -200,11 +196,11 @@ void executeProgram(char* name, int segment) {
     printString(buffer);
     printString("\n");
     for (i = 0; i < 13312; i++) {
-        printChar(buffer[i]);
+        /*printChar(buffer[i]);*/
         putInMemory(segment, i, buffer[i]);    
-        if (buffer[i] == 0xFF) {
+        /*if (buffer[i] == 0xFF) {
             break;
-        }
+        }*/
     }
     printString("finished loop");
     launchProgram(segment);
