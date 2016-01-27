@@ -16,6 +16,7 @@ int div(a, b);
 void newline();
 void handleInterrupt21(int ax, int bx, int cx, int dx);
 void readFile(char* fileName, char* buffer);
+void executeProgram(char* name, int segment);
 
 int main() {
     /*    char line[80];
@@ -44,9 +45,9 @@ int main() {
     char buffer[13312];  /* this is the maximum size of a file */
         makeInterrupt21();
 
-    interrupt(0x21, 3, "messag\0", buffer, 0);  /* read the file into buffer */
-    /*interrupt(0x21, 0, buffer, 0, 0);      /* print out the file */ 
-
+        /*interrupt(0x21, 3, "messag\0", buffer, 0);  /* read the file into buffer */
+        /*interrupt(0x21, 0, buffer, 0, 0);      /* print out the file */
+        interrupt(0x21, 4, "tstprg\0", 0x2000, 0);
     printString("End of program");
     while (1) {}
     return 0;
@@ -131,7 +132,19 @@ void readSector(char* buffer, int sector) {
 
 void handleInterrupt21(int ax, int bx, int cx, int dx) {
     printString("This is interrupt handler 21\n");
-    readFile(bx, cx);
+    /*readFile(bx, cx);*/
+    if (ax == 0) {
+        printString(bx);
+    } else if(ax ==1) {
+        readString(bx);
+    } else if(ax == 2) {
+        readSector(bx, cx);
+        printString(bx);
+    } else if(ax == 3) {
+        readFile(bx, cx);
+    } else if(ax == 4) {
+      executeProgram(bx, cx);
+    }
 }
 
 void readFile(char* fileName, char* buffer) {
@@ -140,39 +153,49 @@ void readFile(char* fileName, char* buffer) {
     int matches;
     int sectorNumb;
     char* directory;
-    readSector(buffer, 2);
     directory = buffer;
-    printString(fileName);
+    readSector(directory, 2);
     for (index = 0; index < 16; index++) {
-        buffer += index * 32;
+        directory += index * 32;
         matches = 1;
         for (i = 0; i<6; i++) {
-            if (buffer[i] != fileName[i]) {
+            if (directory[i] != fileName[i]) {
                 matches = 0;
                 break;
             }
         }
         if (matches) {
-            printString("matches\n");
             sectorNumb = 0;
             while (1) {
                 sectorNumb = directory[i];
-                printString("hello");
-                if (sectorNumb == 0x0D) {
-                    printString("0x0D\0");
-                }
                 if (sectorNumb == 0) {
                     break;
                 }
-                buffer += 512;
                 readSector(buffer, sectorNumb);
+                buffer += 512;
                 i++;
             }
-            printString(buffer);
-            printString("done reading\n");
-        }else {
-            printString("No match\n");
+            break;
+            /*printString(buffer);*/
         }
     }    
+}
+
+void executeProgram(char* name, int segment) {
+  int i = 0;
+  char currChar;
+  char buffer[13312];
+  readFile(name, buffer);
+  printString(buffer);
+  
+
+  while(1) {
+    if(buffer[i] == "\0") {
+      break;
+    }
+    putInMemory(segment, segment + i, buffer[i]);
+    i++;
+    }
+  launchProgram(segment);
 }
 
