@@ -163,10 +163,7 @@ void executeProgram(char* name, int segment) {
     readFile(name, buffer);
 
     for (i = 0; i < 13312; i++) {        
-        putInMemory(segment, i, buffer[i]);    
-        if (buffer[i] == 0xFF) {
-            break;
-        }
+        putInMemory(segment, i, buffer[i]);
     }
     launchProgram(segment);
 }
