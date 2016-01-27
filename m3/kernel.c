@@ -2,9 +2,9 @@
    team 1-F
    */
 
-int PRINT_INTERRUPT = 0x10;
-int READ_CHAR_INTERRUPT = 0x16;
-int MAX_BUFFER_SIZE = 80;
+#define PRINT_INTERRUPT 0x10
+#define READ_CHAR_INTERRUPT 0x16
+#define MAX_BUFFER_SIZE 80
 
 void printString(char str[]);
 void printChar(char c);
@@ -19,7 +19,8 @@ void readFile(char* fileName, char* buffer);
 void executeProgram(char* name, int segment);
 
 int main() {
-    /*    char line[80];
+
+       /*char line[80];
           char buffer[512];
           printString("Hello World!");
 
@@ -51,7 +52,6 @@ int main() {
 */
     makeInterrupt21();
     interrupt(0x21, 4, "tstprg\0", 0x2000, 0);
-    printString("\nEnd of program");
     while (1) {}
     return 0;
 }
@@ -134,7 +134,6 @@ void readSector(char* buffer, int sector) {
 }
 
 void handleInterrupt21(int ax, int bx, int cx, int dx) {
-    printString("This is interrupt handler 21\n");
     /*readFile(bx, cx);*/
     if (ax == 0) {
         printString(bx);
@@ -186,23 +185,17 @@ void readFile(char* fileName, char* buffer) {
 }
 
 void executeProgram(char* name, int segment) {
-    int i = 0;
-    char currChar;
+    int i;
     char buffer[13312];
-    if (segment == 0x2000) {
-        printString("segment is 0x2000\n");
-    }
     readFile(name, buffer);
-    printString(buffer);
-    printString("\n");
+
     for (i = 0; i < 13312; i++) {
-        /*printChar(buffer[i]);*/
+        
         putInMemory(segment, i, buffer[i]);    
         /*if (buffer[i] == 0xFF) {
             break;
         }*/
     }
-    printString("finished loop");
     launchProgram(segment);
 }
 
