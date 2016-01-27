@@ -6,3 +6,6 @@ rm kernel
 rm kernel_asm.o
 rm kernel.o
 rm bochsout.txt
+rm shell
+rm shell.o
+rm lib.o

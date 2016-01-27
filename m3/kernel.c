@@ -6,6 +6,8 @@
 #define READ_CHAR_INTERRUPT 0x16
 #define MAX_BUFFER_SIZE 80
 
+#define SHELL "shell\0"
+
 void printString(char str[]);
 void printChar(char c);
 int readChar();
@@ -17,43 +19,12 @@ void newline();
 void handleInterrupt21(int ax, int bx, int cx, int dx);
 void readFile(char* fileName, char* buffer);
 void executeProgram(char* name, int segment);
+void terminate();
 
 int main() {
-
-       /*char line[80];
-          char buffer[512];
-          printString("Hello World!");
-
-          newline();
-
-          printString("Enter a line: ");
-          readString(line);
-          printString(line);
-
-          newline(); 
-
-          readSector(buffer, 30);
-          printString(buffer);
-
-          newline();
-
-          handleInterrupt21(0, 0, 0, 0);
-          interrupt(0x21, 0, 0, 0, 0);
-
-          newline();
-
-
-    char buffer[13312];
-    makeInterrupt21();
-
-    interrupt(0x21, 3, "messag\0", buffer, 0); 
-    interrupt(0x21, 0, buffer, 0, 0);     
-    newline();
-*/
-    makeInterrupt21();
-    interrupt(0x21, 4, "tstprg\0", 0x2000, 0);
-    while (1) {}
-    return 0;
+  makeInterrupt21();
+  interrupt(0x21, 4, SHELL, 0x2000, 0);
+  return 0;
 }
 
 void newline() {
@@ -146,6 +117,8 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
         readFile(bx, cx);
     } else if(ax == 4) {
         executeProgram(bx, cx);
+    } else if(ax == 5) {
+      terminate();
     }
 }
 
@@ -189,13 +162,16 @@ void executeProgram(char* name, int segment) {
     char buffer[13312];
     readFile(name, buffer);
 
-    for (i = 0; i < 13312; i++) {
-        
+    for (i = 0; i < 13312; i++) {        
         putInMemory(segment, i, buffer[i]);    
-        /*if (buffer[i] == 0xFF) {
+        if (buffer[i] == 0xFF) {
             break;
-        }*/
+        }
     }
     launchProgram(segment);
+}
+
+void terminate() {
+  interrupt(0x21, 4, SHELL, 0x2000, 0);
 }
 
