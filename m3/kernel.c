@@ -68,14 +68,16 @@ void readString(char str[]) {
             if (index > 0) {
                 index--;
             }
-        } else {
+        } else if (readCharChar != 0xd) {
             str[index] = readCharChar;
             index++;
         }
-        if (index > MAX_BUFFER_SIZE - 2 || readCharChar == 0xd) {
-            str[index] = 0xa;
-            str[index + 1] = 0x0;
-            printString("\n");
+        if (index > MAX_BUFFER_SIZE - 1 || readCharChar == 0xd) {
+            /*str[index] = 0xa;
+            str[index + 1] = 0x0;*/
+            str[index] = 0x0;
+            printChar(0xa);
+            /*printChar('\n');*/
             break;
         }
     }
