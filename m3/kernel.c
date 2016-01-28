@@ -6,8 +6,6 @@
 #define READ_CHAR_INTERRUPT 0x16
 #define MAX_BUFFER_SIZE 80
 
-#define SHELL "shell\0"
-
 void printString(char str[]);
 void printChar(char c);
 int readChar();
@@ -23,7 +21,7 @@ void terminate();
 
 int main() {
   makeInterrupt21();
-  interrupt(0x21, 4, SHELL, 0x2000, 0);
+  terminate();
   return 0;
 }
 
@@ -73,11 +71,8 @@ void readString(char str[]) {
             index++;
         }
         if (index > MAX_BUFFER_SIZE - 1 || readCharChar == 0xd) {
-            /*str[index] = 0xa;
-            str[index + 1] = 0x0;*/
             str[index] = 0x0;
             printChar(0xa);
-            /*printChar('\n');*/
             break;
         }
     }
@@ -107,7 +102,6 @@ void readSector(char* buffer, int sector) {
 }
 
 void handleInterrupt21(int ax, int bx, int cx, int dx) {
-    /*readFile(bx, cx);*/
     if (ax == 0) {
         printString(bx);
     } else if(ax ==1) {
@@ -148,7 +142,6 @@ void readFile(char* fileName, char* buffer) {
                 readSector(buffer + 512 * i, directory[6 + index + i]);
             }
             return;
-            /*printString(buffer);*/
         }
     }    
 }
@@ -165,6 +158,14 @@ void executeProgram(char* name, int segment) {
 }
 
 void terminate() {
-  interrupt(0x21, 4, SHELL, 0x2000, 0);
+  char shell[6];
+  shell[0] = 's';
+  shell[1] = 'h';
+  shell[2] = 'e';
+  shell[3] = 'l';
+  shell[4] = 'l';
+  shell[5] = '\0';
+
+  interrupt(0x21, 4, shell, 0x2000, 0);
 }
 
