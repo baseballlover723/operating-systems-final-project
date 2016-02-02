@@ -11,6 +11,7 @@ void printChar(char c);
 int readChar();
 void readString(char str[]);
 void readSector(char* buffer, int sector);
+void writeSector(char* buffer, int sector);
 int mod(a, b);
 int div(a, b);
 void newline();
@@ -101,6 +102,14 @@ void readSector(char* buffer, int sector) {
     interrupt(0x13, ax, bx, cx, dx);
 }
 
+void writeSector(char* buffer, int sector) {
+    int ax = 3 * 256 + 1;
+    int bx = buffer;
+    int cx = div(sector, 36) * 256 + mod(sector, 18) + 1;
+    int dx = mod(div(sector, 18), 2) * 256;
+    interrupt(0x13, ax, bx, cx, dx);
+}
+
 void handleInterrupt21(int ax, int bx, int cx, int dx) {
     if (ax == 0) {
         printString(bx);
@@ -115,6 +124,8 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
         executeProgram(bx, cx);
     } else if(ax == 5) {
       terminate();
+    } else if(ax == 6) {
+        writeSector(bx, cx);
     }
 }
 
