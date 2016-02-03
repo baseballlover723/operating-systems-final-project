@@ -18,8 +18,6 @@
 #define MAX_BUFFER_SIZE 13312
 #define BUFFER_INC 512
 
-#define BAD_COMMAND "Invalid command\n"
-
 #define TYPE_SIZE 5
 #define EXECUTE_SIZE 8
 #define DELETE_SIZE 7
@@ -37,6 +35,7 @@ void fillCopy(char *arr);
 int main() {
   char *command;
   char shell[7];
+  char bad[4];
   shell[0] = 's';
   shell[1] = 'h';
   shell[2] = 'e';
@@ -44,11 +43,15 @@ int main() {
   shell[4] = 'l';
   shell[5] = '>';
   shell[6] = '\0';
+  bad[0] = 'b';
+  bad[1] = 'a';
+  bad[2] = 'd';
+  bad[3] = '\0';
   while(1) {
     interrupt(0x21, PRINT_STRING, shell, 0, 0);
     interrupt(0x21, READ_STRING, command, 0, 0);
     if (!executeCommand(command)) {
-      interrupt(0x21, PRINT_STRING, BAD_COMMAND, 0, 0);
+      interrupt(0x21, PRINT_STRING, bad, 0, 0);
     }
   }
 }
@@ -84,7 +87,7 @@ int executeCommand(char *command) {
     return 1;
   } else if (strEquals(name, delete)) {
     i = DELETE_SIZE;
-    i = getArg(command, arg), i;
+    i = getArg(command, arg, i);
     interrupt(0x21, DELETE_FILE, arg, 0, 0);
     return 1;
   } else if (strEquals(name, copy)) {
@@ -117,7 +120,7 @@ int getArg(char *command, char *arg, int i) {
   /* Given a full command string, returns the location that it stopped */
   int j = 0;
 
-  while(command[i] != '\0' && command[i] != " ") {
+  while(command[i] != '\0' && command[i] != ' ') {
     arg[j] = command[i];
     j++;
     i++;

@@ -4,7 +4,10 @@
 
 #define PRINT_INTERRUPT 0x10
 #define READ_CHAR_INTERRUPT 0x16
-#define MAX_BUFFER_SIZE 80
+#define MAX_STRING_SIZE 80
+
+#define MAX_BUFFER_SIZE 512
+#define MAX_INDEX_SIZE 32
 
 void printString(char str[]);
 void printChar(char c);
@@ -73,7 +76,7 @@ void readString(char str[]) {
             str[index] = readCharChar;
             index++;
         }
-        if (index > MAX_BUFFER_SIZE - 1 || readCharChar == 0xd) {
+        if (index > MAX_STRING_SIZE - 1 || readCharChar == 0xd) {
             str[index] = 0x0;
             printChar(0xa);
             break;
@@ -125,7 +128,7 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
     } else if(ax == 4) {
       executeProgram(bx, cx);
     } else if(ax == 5) {
-        terminate();
+      terminate();
     } else if(ax == 6) {
       writeSector(bx, cx);
     } else if(ax == 7) {
@@ -140,7 +143,7 @@ void readFile(char* fileName, char* buffer) {
     int i;
     int matches;
     int sectorNumb;
-    char directory[512];
+    char directory[MAX_BUFFER_SIZE];
     buffer[0] = 'F';
     buffer[1] = 'N';
     buffer[2] = 'F';
@@ -148,9 +151,9 @@ void readFile(char* fileName, char* buffer) {
     buffer[4] = '\0';
     readSector(directory, 2);
 
-    for (index = 0; index < 512; index += 32) {
+    for (index = 0; index < MAX_BUFFER_SIZE; index += MAX_INDEX_SIZE) {
         matches = 1;
-        for (i = 0; i<6; i++) {
+        for (i = 0; i<6 && fileName[i] != '\0'; i++) {
             if (directory[i + index] != fileName[i]) {
                 matches = 0;
                 break;
@@ -161,7 +164,7 @@ void readFile(char* fileName, char* buffer) {
               /*printString("read sector ");
                 printhex(directory[6+index+i]);
                 printString("\n");*/
-                readSector(buffer + 512 * i, directory[6 + index + i]);
+                readSector(buffer + MAX_BUFFER_SIZE * i, directory[6 + index + i]);
             }
             return;
         }
@@ -173,12 +176,12 @@ void deleteFile(char* fileName) {
   int i;
   int matches;
   int sectorNum;
-  char directory[512];
-  char map[512];
+  char directory[MAX_BUFFER_SIZE];
+  char map[MAX_BUFFER_SIZE];
   readSector(directory, 2);
   readSector(map, 1);
 
-  for (index = 0; index < 512; index += 32) {
+  for (index = 0; index < MAX_BUFFER_SIZE; index += MAX_INDEX_SIZE) {
     matches = 1;
     for (i = 0; i<6; i++) {
       if (directory[i + index] != fileName[i]) {
@@ -223,21 +226,21 @@ void terminate() {
 }
 
 void writeFile(char* name, char* buffer, int numberOfSectors) {
-    char map[512];
-    char directory[512];
+    char map[MAX_BUFFER_SIZE];
+    char directory[MAX_BUFFER_SIZE];
     int index;
     int i;
     int sector;
-
+    
     readSector(map, 1);
     readSector(directory, 2);
 
-    for (index = 0; index < 512; index += 32) {
+    for (index = 0; index < MAX_BUFFER_SIZE; index += MAX_INDEX_SIZE) {
         if (directory[index] == 0x00) {
             break;
         }
     }
-    if (index >= 512) {
+    if (index >= MAX_BUFFER_SIZE) {
         return;
     }
 
@@ -247,23 +250,25 @@ void writeFile(char* name, char* buffer, int numberOfSectors) {
     for (; i < 6; i++) {
         directory[index + i] = 0x00;
     }
-    // i = 6
+    /* TODO: Rework this while loop  */
+    sector = 3;
     while(numberOfSectors > 0) {
-        for (sector = 0; sector < 512; sector++) {
-            if (map[sector] == 0x00) {
-                map[sector] == 0xFF;
-                numberOfSectors--;
-                directory[index + i] = sector + 1;
-                i++;
-                writeSector(buffer, sector + 1);
-                buffer += 512;
-            }
-        }
-        if (sector >= 512) {
-            return;
-        }
+      /*for (sector = 0; sector < MAX_BUFFER_SIZE; sector++) {*/
+      if (map[sector] == 0x00) {
+        map[sector] = 0xFF;
+        numberOfSectors--;
+        directory[index + i] = sector + 1;
+        i++;
+        writeSector(buffer, sector + 1);
+        buffer += MAX_BUFFER_SIZE;
+      }
+            /*}*/
+      if (sector >= MAX_BUFFER_SIZE) {
+        return;
+      }
+      sector++;
     }
-    while (i < 32) {
+    while (i < MAX_INDEX_SIZE) {
         directory[index + i] = 0x00;
         i++;
     }
