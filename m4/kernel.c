@@ -200,7 +200,7 @@ void writeFile(char* name, char* buffer, int numberOfSectors) {
         return;
     }
 
-    for (i = 0; i < 6 || name[i] == '\0'; i++) {
+    for (i = 0; i < 6 && name[i] != '\0'; i++) {
         directory[index + i] = name[i];
     }
     for (; i < 6; i++) {
