@@ -23,17 +23,20 @@
 #define DELETE_SIZE 7
 #define COPY_SIZE 5
 #define DIR_SIZE 4
+#define CREATE_SIZE 7
 
 int executeCommand(char *command);
 void getCommand(char *command, char *name);
 int getArg(char *command, char *arg, int i);
 int strEquals(char* str1, char* str2);
 void printDirectory();
+void createFile(char *filename);
 void fillType(char *arr);
 void fillExecute(char *arr);
 void fillDelete(char *arr);
 void fillCopy(char *arr);
 void fillDir(char *arr);
+void fillCreate(char *arr);
 
 int main() {
   char *command;
@@ -72,11 +75,13 @@ int executeCommand(char *command) {
   char delete[DELETE_SIZE];
   char copy[COPY_SIZE];
   char dir[DIR_SIZE];
+  char create[CREATE_SIZE];
   fillType(type);
   fillExecute(execute);
   fillDelete(delete);
   fillCopy(copy);
   fillDir(dir);
+  fillCreate(create);
 
   getCommand(command, name);
   if (strEquals(name, type)) {
@@ -108,6 +113,11 @@ int executeCommand(char *command) {
     return 1;
   } else if (strEquals(name, dir)) {
     printDirectory();
+    return 1;
+  } else if (strEquals(name, create)) {
+    i = CREATE_SIZE;
+    i = getArg(command, arg, i);
+    createFile(arg);
     return 1;
   }
   return 0;
@@ -173,6 +183,50 @@ void printDirectory() {
   }
 }
 
+void createFile(char *filename) {
+  char file[MAX_BUFFER_SIZE];
+  char line[512];
+  int numSectors;
+  int i;
+  int index = 0;
+  while(1) {
+    interrupt(0x21, READ_STRING, line, 0, 0);
+    if (line[0] == 0x00) {
+      numSectors = countSectors(file);
+      interrupt(0x21, WRITE_FILE, filename, file, numSectors);
+      return;
+    } else {
+      index = cpyStr(line, file, index);
+      for (i = 0; i < 512; i++) {
+        line[i] = '\0';
+      }
+    }
+  }
+}
+
+int cpyStr(char *line, char *file, int index) {
+  /*Copies line into file, starting at index. Returns new index to start from*/
+  int i = 0;
+  while (line != '\0' && i < 512) {
+    file[i + index] = line[i];
+    i++;
+  }
+  return index + i;
+}
+
+int countSectors(char *file) {
+  int i;
+  int count = 0;
+  for(i = 0; i < MAX_BUFFER_SIZE; i += 512) {
+    if (file[i] == 0x00) {
+      return count;
+    } else {
+      count++;
+    }
+  }
+  return count;
+}
+
 void fillType(char *arr) {
   arr[0] = 't';
   arr[1] = 'y';
@@ -215,4 +269,14 @@ void fillDir(char *arr) {
   arr[1] = 'i';
   arr[2] = 'r';
   arr[3] = '\0';
+}
+
+void fillCreate(char *arr) {
+  arr[0] = 'c';
+  arr[1] = 'r';
+  arr[2] = 'e';
+  arr[3] = 'a';
+  arr[4] = 't';
+  arr[5] = 'e';
+  arr[6] = '\0';
 }

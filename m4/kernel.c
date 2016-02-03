@@ -122,7 +122,6 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
       readString(bx);
     } else if(ax == 2) {
       readSector(bx, cx);
-      printString(bx);
     } else if(ax == 3) {
       readFile(bx, cx);
     } else if(ax == 4) {
