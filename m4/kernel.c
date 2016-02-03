@@ -157,6 +157,9 @@ void readFile(char* fileName, char* buffer) {
                 break;
             }
         }
+        if (i < 6 && directory[i + index] != fileName[i]) {
+          matches = 0;
+        }
         if (matches) {
             for (i=0; directory[6 + index + i] != 0x00; i++) {
               /*printString("read sector ");
@@ -186,6 +189,9 @@ void deleteFile(char* fileName) {
         matches = 0;
         break;
       }
+    }
+    if (i < 6 && directory[i + index] != fileName[i]) {
+      matches = 0;
     }
     if (matches) {
       directory[index] = 0x00;

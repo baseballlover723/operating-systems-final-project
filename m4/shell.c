@@ -161,7 +161,6 @@ int strEquals(char* str1, char* str2) {
 }
 
 void printDirectory() {
-  /* TODO: KERNEL prints twice during command */
   char directory[512];
   char fileName[7];
   char newline[2];
@@ -190,6 +189,7 @@ void createFile(char *filename) {
   int numSectors;
   int i;
   int index = 0;
+
   while(1) {
     interrupt(0x21, READ_STRING, line, 0, 0);
     if (line[0] == 0x00) {
@@ -208,11 +208,12 @@ void createFile(char *filename) {
 int cpyStr(char *line, char *file, int index) {
   /*Copies line into file, starting at index. Returns new index to start from*/
   int i = 0;
-  while (line != '\0' && i < 512) {
+  while (line[i] != '\0' && i < 512) {
     file[i + index] = line[i];
     i++;
   }
-  return index + i;
+  file[i + index] = '\n';
+  return index + i + 1;
 }
 
 int countSectors(char *file) {
