@@ -139,11 +139,16 @@ void readFile(char* fileName, char* buffer) {
     int matches;
     int sectorNumb;
     char directory[512];
+    buffer[0] = 'F';
+    buffer[1] = 'N';
+    buffer[2] = 'F';
+    buffer[3] = '\n';
+    buffer[4] = '\0';
     readSector(directory, 2);
 
     for (index = 0; index < 512; index += 32) {
         matches = 1;
-        for (i = 0; i<6 || fileName[i] == '\0'; i++) {
+        for (i = 0; i<6; i++) {
             if (directory[i + index] != fileName[i]) {
                 matches = 0;
                 break;
