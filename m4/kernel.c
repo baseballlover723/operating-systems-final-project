@@ -17,6 +17,7 @@ int div(a, b);
 void newline();
 void handleInterrupt21(int ax, int bx, int cx, int dx);
 void readFile(char* fileName, char* buffer);
+void deleteFile(char* fileName);
 void executeProgram(char* name, int segment);
 void terminate();
 void writeFile(char* name, char* buffer, int numberOfSectors);
@@ -113,20 +114,22 @@ void writeSector(char* buffer, int sector) {
 
 void handleInterrupt21(int ax, int bx, int cx, int dx) {
     if (ax == 0) {
-        printString(bx);
+      printString(bx);
     } else if(ax ==1) {
-        readString(bx);
+      readString(bx);
     } else if(ax == 2) {
-        readSector(bx, cx);
-        printString(bx);
+      readSector(bx, cx);
+      printString(bx);
     } else if(ax == 3) {
-        readFile(bx, cx);
+      readFile(bx, cx);
     } else if(ax == 4) {
-        executeProgram(bx, cx);
+      executeProgram(bx, cx);
     } else if(ax == 5) {
         terminate();
     } else if(ax == 6) {
-        writeSector(bx, cx);
+      writeSector(bx, cx);
+    } else if(ax == 7) {
+      deleteFile(bx);
     }
 }
 
@@ -148,14 +151,45 @@ void readFile(char* fileName, char* buffer) {
         }
         if (matches) {
             for (i=0; directory[6 + index + i] != 0x00; i++) {
-                printString("read sector ");
+              /*printString("read sector ");
                 printhex(directory[6+index+i]);
-                printString("\n");
+                printString("\n");*/
                 readSector(buffer + 512 * i, directory[6 + index + i]);
             }
             return;
         }
     }    
+}
+
+void deleteFile(char* fileName) {
+  int index;
+  int i;
+  int matches;
+  int sectorNum;
+  char directory[512];
+  char map[512];
+  readSector(directory, 2);
+  readSector(map, 1);
+
+  for (index = 0; index < 512; index += 32) {
+    matches = 1;
+    for (i = 0; i<6; i++) {
+      if (directory[i + index] != fileName[i]) {
+        matches = 0;
+        break;
+      }
+    }
+    if (matches) {
+      directory[index] = 0x00;
+      for (i=0; directory[6 + index + i] != 0x00; i++) {
+        sectorNum = directory[6 + index + i];
+        map[sectorNum - 1] = 0x00;
+      }
+      writeSector(directory, 2);
+      writeSector(map, 1);
+      return;
+    }
+  }
 }
 
 void executeProgram(char* name, int segment) {
