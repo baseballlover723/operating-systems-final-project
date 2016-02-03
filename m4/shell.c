@@ -11,24 +11,28 @@
 #define TERMINATE 5
 #define WRITE_SECTOR 6 /* args: char*, int */
 #define DELETE_FILE 7 /* args: char* */
+#define WRITE_FILE 8 /* args: char* char* int */
 
 #define MAX_COMMAND_SIZE 80
 #define NUM_COMMANDS 10
 #define MAX_BUFFER_SIZE 13312
+#define BUFFER_INC 512
 
 #define BAD_COMMAND "Invalid command\n"
 
 #define TYPE_SIZE 5
 #define EXECUTE_SIZE 8
 #define DELETE_SIZE 7
+#define COPY_SIZE 5
 
 int executeCommand(char *command);
 void getCommand(char *command, char *name);
-void getArg(char *command, char *arg);
+int getArg(char *command, char *arg, int i);
 int strEquals(char* str1, char* str2);
 void fillType(char *arr);
 void fillExecute(char *arr);
 void fillDelete(char *arr);
+void fillCopy(char *arr);
 
 int main() {
   char *command;
@@ -51,29 +55,48 @@ int main() {
 
 int executeCommand(char *command) {
   int i = 0;
+  int numSectors = 0;
+  int bufferLocation = 0;
   char name[MAX_COMMAND_SIZE];
   char arg[MAX_COMMAND_SIZE];
+  char secondArg[MAX_COMMAND_SIZE];
   char buffer[MAX_BUFFER_SIZE];
   char type[TYPE_SIZE];
   char execute[EXECUTE_SIZE];
   char delete[DELETE_SIZE];
+  char copy[COPY_SIZE];
   fillType(type);
   fillExecute(execute);
   fillDelete(delete);
+  fillCopy(copy);
 
   getCommand(command, name);
   if (strEquals(name, type)) {
-    getArg(command, arg);
+    i = TYPE_SIZE;
+    i = getArg(command, arg, i);
     interrupt(0x21, READ_FILE, arg, buffer, 0);
     interrupt(0x21, PRINT_STRING, buffer, 0, 0);
     return 1;
   } else if (strEquals(name, execute)) {
-    getArg(command, arg);
+    i = EXECUTE_SIZE;
+    i = getArg(command, arg, i);
     interrupt(0x21, EXECUTE_PROG, arg, 0x2000, 0);
     return 1;
   } else if (strEquals(name, delete)) {
-    getArg(command, arg);
+    i = DELETE_SIZE;
+    i = getArg(command, arg), i;
     interrupt(0x21, DELETE_FILE, arg, 0, 0);
+    return 1;
+  } else if (strEquals(name, copy)) {
+    i = COPY_SIZE;
+    i = getArg(command, arg, i);
+    i = getArg(command, secondArg, i);
+    interrupt(0x21, READ_FILE, arg, buffer, 0);
+    while(buffer[bufferLocation] != 0x00){
+      bufferLocation += BUFFER_INC;
+      numSectors++;
+    }
+    interrupt(0x21, WRITE_FILE, secondArg, buffer, numSectors);
     return 1;
   }
   return 0;
@@ -90,23 +113,18 @@ void getCommand(char *command, char *name) {
   name[i] = '\0';
 }
 
-void getArg(char *command, char *arg) {
-  /* Given a full command string, returns the argument given or "" */
-  int i = 0;
+int getArg(char *command, char *arg, int i) {
+  /* Given a full command string, returns the location that it stopped */
   int j = 0;
-  int flag = 0;
 
-  while(command[i] != '\0') {
-    if (flag) {
-      arg[j] = command[i];
-      j++;
-    }
-    if (command[i] == ' ') {
-      flag = 1;
-    }
+  while(command[i] != '\0' && command[i] != " ") {
+    arg[j] = command[i];
+    j++;
     i++;
   }
+  i++;
   arg[j] = '\0';
+  return i;
 }
 
 int strEquals(char* str1, char* str2) {
@@ -147,4 +165,12 @@ void fillDelete(char *arr) {
   arr[4] = 't';
   arr[5] = 'e';
   arr[6] = '\0';
+}
+
+void fillCopy(char *arr) {
+  arr[0] = 'c';
+  arr[1] = 'o';
+  arr[2] = 'p';
+  arr[3] = 'y';
+  arr[4] = '\0';
 }

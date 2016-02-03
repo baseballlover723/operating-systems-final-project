@@ -130,6 +130,8 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
       writeSector(bx, cx);
     } else if(ax == 7) {
       deleteFile(bx);
+    } else if(ax==8) {
+    	writeFile(bx, cx, dx);
     }
 }
 
