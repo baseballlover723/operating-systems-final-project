@@ -19,11 +19,12 @@ void handleInterrupt21(int ax, int bx, int cx, int dx);
 void readFile(char* fileName, char* buffer);
 void executeProgram(char* name, int segment);
 void terminate();
+void writeFile(char* name, char* buffer, int numberOfSectors);
 
 int main() {
-  makeInterrupt21();
-  terminate();
-  return 0;
+    makeInterrupt21();
+    terminate();
+    return 0;
 }
 
 void newline() {
@@ -123,7 +124,7 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
     } else if(ax == 4) {
         executeProgram(bx, cx);
     } else if(ax == 5) {
-      terminate();
+        terminate();
     } else if(ax == 6) {
         writeSector(bx, cx);
     }
@@ -136,10 +137,10 @@ void readFile(char* fileName, char* buffer) {
     int sectorNumb;
     char directory[512];
     readSector(directory, 2);
-    
+
     for (index = 0; index < 512; index += 32) {
         matches = 1;
-        for (i = 0; i<6; i++) {
+        for (i = 0; i<6 || fileName[i] == '\0'; i++) {
             if (directory[i + index] != fileName[i]) {
                 matches = 0;
                 break;
@@ -169,14 +170,63 @@ void executeProgram(char* name, int segment) {
 }
 
 void terminate() {
-  char shell[6];
-  shell[0] = 's';
-  shell[1] = 'h';
-  shell[2] = 'e';
-  shell[3] = 'l';
-  shell[4] = 'l';
-  shell[5] = '\0';
+    char shell[6];
+    shell[0] = 's';
+    shell[1] = 'h';
+    shell[2] = 'e';
+    shell[3] = 'l';
+    shell[4] = 'l';
+    shell[5] = '\0';
 
-  interrupt(0x21, 4, shell, 0x2000, 0);
+    interrupt(0x21, 4, shell, 0x2000, 0);
+}
+
+void writeFile(char* name, char* buffer, int numberOfSectors) {
+    char map[512];
+    char directory[512];
+    int index;
+    int i;
+    int sector;
+
+    readSector(map, 1);
+    readSector(directory, 2);
+
+    for (index = 0; index < 512; index += 32) {
+        if (directory[index] == 0x00) {
+            break;
+        }
+    }
+    if (index >= 512) {
+        return;
+    }
+
+    for (i = 0; i < 6 || name[i] == '\0'; i++) {
+        directory[index + i] = name[i];
+    }
+    for (; i < 6; i++) {
+        directory[index + i] = 0x00;
+    }
+    // i = 6
+    while(numberOfSectors > 0) {
+        for (sector = 0; sector < 512; sector++) {
+            if (map[sector] == 0x00) {
+                map[sector] == 0xFF;
+                numberOfSectors--;
+                directory[index + i] = sector + 1;
+                i++;
+                writeSector(buffer, sector + 1);
+                buffer += 512;
+            }
+        }
+        if (sector >= 512) {
+            return;
+        }
+    }
+    while (i < 32) {
+        directory[index + i] = 0x00;
+        i++;
+    }
+    writeSector(map, 1);
+    writeSector(directory, 2);
 }
 
