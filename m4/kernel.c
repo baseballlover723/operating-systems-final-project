@@ -149,7 +149,6 @@ void readFile(char* fileName, char* buffer) {
     buffer[3] = '\n';
     buffer[4] = '\0';
     readSector(directory, 2);
-
     for (index = 0; index < MAX_BUFFER_SIZE; index += MAX_INDEX_SIZE) {
         matches = 1;
         for (i = 0; i<6 && fileName[i] != '\0'; i++) {
@@ -236,6 +235,7 @@ void writeFile(char* name, char* buffer, int numberOfSectors) {
     readSector(directory, 2);
 
     for (index = 0; index < MAX_BUFFER_SIZE; index += MAX_INDEX_SIZE) {
+
         if (directory[index] == 0x00) {
             break;
         }
@@ -244,10 +244,13 @@ void writeFile(char* name, char* buffer, int numberOfSectors) {
         return;
     }
 
-    for (i = 0; i < 6 && name[i] != '\0'; i++) {
+    for (i = 0; i < 6; i++) {
+    	if (name[i] == '\0') {
+    		break;
+    	}
         directory[index + i] = name[i];
     }
-    for (; i < 6; i++) {
+    for (i = i; i < 6; i++) {
         directory[index + i] = 0x00;
     }
 

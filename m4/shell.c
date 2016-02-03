@@ -105,6 +105,7 @@ int executeCommand(char *command) {
     i = getArg(command, arg, i);
     i = getArg(command, secondArg, i);
     interrupt(0x21, READ_FILE, arg, buffer, 0);
+
     while(buffer[bufferLocation] != 0x00){
       bufferLocation += BUFFER_INC;
       numSectors++;
