@@ -183,7 +183,7 @@ void deleteFile(char* fileName) {
 
   for (index = 0; index < MAX_BUFFER_SIZE; index += MAX_INDEX_SIZE) {
     matches = 1;
-    for (i = 0; i<6; i++) {
+    for (i = 0; i<6 && fileName[i] != '\0'; i++) {
       if (directory[i + index] != fileName[i]) {
         matches = 0;
         break;
@@ -231,6 +231,7 @@ void writeFile(char* name, char* buffer, int numberOfSectors) {
     int index;
     int i;
     int sector;
+    int fileSize = numberOfSectors;
     
     readSector(map, 1);
     readSector(directory, 2);
@@ -250,8 +251,19 @@ void writeFile(char* name, char* buffer, int numberOfSectors) {
     for (; i < 6; i++) {
         directory[index + i] = 0x00;
     }
-    /* TODO: Rework this while loop  */
+
     sector = 3;
+    while (fileSize > 0) {
+      if (map[sector] == 0x00) {
+        fileSize--;
+      }
+      if (sector >= MAX_BUFFER_SIZE) {
+        return;
+      }
+      sector++;
+    }
+    sector = 3;
+    
     while(numberOfSectors > 0) {
       /*for (sector = 0; sector < MAX_BUFFER_SIZE; sector++) {*/
       if (map[sector] == 0x00) {

@@ -22,15 +22,18 @@
 #define EXECUTE_SIZE 8
 #define DELETE_SIZE 7
 #define COPY_SIZE 5
+#define DIR_SIZE 4
 
 int executeCommand(char *command);
 void getCommand(char *command, char *name);
 int getArg(char *command, char *arg, int i);
 int strEquals(char* str1, char* str2);
+void printDirectory();
 void fillType(char *arr);
 void fillExecute(char *arr);
 void fillDelete(char *arr);
 void fillCopy(char *arr);
+void fillDir(char *arr);
 
 int main() {
   char *command;
@@ -68,10 +71,12 @@ int executeCommand(char *command) {
   char execute[EXECUTE_SIZE];
   char delete[DELETE_SIZE];
   char copy[COPY_SIZE];
+  char dir[DIR_SIZE];
   fillType(type);
   fillExecute(execute);
   fillDelete(delete);
   fillCopy(copy);
+  fillDir(dir);
 
   getCommand(command, name);
   if (strEquals(name, type)) {
@@ -100,6 +105,9 @@ int executeCommand(char *command) {
       numSectors++;
     }
     interrupt(0x21, WRITE_FILE, secondArg, buffer, numSectors);
+    return 1;
+  } else if (strEquals(name, dir)) {
+    printDirectory();
     return 1;
   }
   return 0;
@@ -141,6 +149,30 @@ int strEquals(char* str1, char* str2) {
     return str1[i] == '\0' && str2[i] == '\0';
 }
 
+void printDirectory() {
+  /* TODO: KERNEL prints twice during command */
+  char directory[512];
+  char fileName[7];
+  char newline[2];
+  int index;
+  int i;
+  newline[0] = '\n';
+  newline[1] = '\0';
+
+  interrupt(0x21, READ_SECTOR, directory, 2, 0);
+  
+  for (index = 0; index < 512; index += 32) {
+    for (i = 0; i < 6 && directory[index + i] != 0x00; i++) {
+      fileName[i] = directory[index + i];
+    }
+    fileName[i] = '\0';
+    interrupt(0x21, PRINT_STRING, fileName, 0, 0);
+    if (fileName[0] != '\0') {
+      interrupt(0x21, PRINT_STRING, newline, 0, 0);
+    }
+  }
+}
+
 void fillType(char *arr) {
   arr[0] = 't';
   arr[1] = 'y';
@@ -176,4 +208,11 @@ void fillCopy(char *arr) {
   arr[2] = 'p';
   arr[3] = 'y';
   arr[4] = '\0';
+}
+
+void fillDir(char *arr) {
+  arr[0] = 'd';
+  arr[1] = 'i';
+  arr[2] = 'r';
+  arr[3] = '\0';
 }
