@@ -43,4 +43,4 @@ How to verify: To run our operating system, type "./compileOS.sh" into the termi
 
 Known bugs and deficiencies: Our system currently has no known bugs or deficiencies.
 
-Additional features: When we print out the names of all of the files in our system, we also print out the size of the file.
+Additional features: When we print out the names of all of the files in our system, we also print out the size of the file.  Also, if you try to run a command on a file that is not in the system, the shell will print out "FNF" which stands for "file not found."
