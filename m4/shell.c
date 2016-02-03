@@ -37,6 +37,8 @@ void fillDelete(char *arr);
 void fillCopy(char *arr);
 void fillDir(char *arr);
 void fillCreate(char *arr);
+char* itoa(int n, char* buffer);
+int mod(int a, int b);
 
 int main() {
   char *command;
@@ -166,20 +168,28 @@ void printDirectory() {
   char newline[2];
   int index;
   int i;
+  int size = 0;
+  char sizeStr[4];
   newline[0] = '\n';
   newline[1] = '\0';
 
   interrupt(0x21, READ_SECTOR, directory, 2, 0);
   
   for (index = 0; index < 512; index += 32) {
-    for (i = 0; i < 6 && directory[index + i] != 0x00; i++) {
+    size = 0;
+      for (i = 0; i < 6 && directory[index + i] != 0x00; i++) {
       fileName[i] = directory[index + i];
     }
     fileName[i] = '\0';
+    while(i < 32 && directory[index + 6 + size] != 0x00) {
+        size++;
+    }
+
     interrupt(0x21, PRINT_STRING, fileName, 0, 0);
     if (fileName[0] != '\0') {
-      interrupt(0x21, PRINT_STRING, newline, 0, 0);
-    }
+        interrupt(0x21, PRINT_STRING, itoa(size, sizeStr), 0, 0);
+        interrupt(0x21, PRINT_STRING, newline, 0, 0);
+    }  
   }
 }
 
@@ -281,4 +291,23 @@ void fillCreate(char *arr) {
   arr[4] = 't';
   arr[5] = 'e';
   arr[6] = '\0';
+}
+
+char* itoa(int n, char* buffer) {
+    buffer[0] = ' ';
+    buffer[1] = (mod(n, 100) / 10) + '0';
+    buffer[2] = mod(n, 10) + '0';
+    buffer[3] = '\0';
+    if (buffer[1] == '0') {
+        buffer[1] = buffer[2];
+        buffer[2] = buffer[3];
+    }
+    return buffer;
+}
+
+int mod(int a, int b) {
+    while (a >= b) {
+        a = a - b;
+    }
+    return a;
 }
