@@ -44,6 +44,7 @@ int main() {
   char *command;
   char shell[7];
   char bad[4];
+  enableInterrupts();
   shell[0] = 's';
   shell[1] = 'h';
   shell[2] = 'e';

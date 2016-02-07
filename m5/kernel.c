@@ -9,6 +9,14 @@
 #define MAX_BUFFER_SIZE 512
 #define MAX_INDEX_SIZE 32
 
+typedef struct {
+  int isActive;
+  int stackPointer;
+} process;
+
+process processTable[8];
+int currentProcess;
+
 void printString(char str[]);
 void printChar(char c);
 int readChar();
@@ -19,21 +27,34 @@ int mod(a, b);
 int div(a, b);
 void newline();
 void handleInterrupt21(int ax, int bx, int cx, int dx);
+void handleTimerInterrupt(int segment, int sp);
 void readFile(char* fileName, char* buffer);
 void deleteFile(char* fileName);
-void executeProgram(char* name, int segment);
+void executeProgram(char* name);
 void terminate();
 void writeFile(char* name, char* buffer, int numberOfSectors);
+void initializeProcessTable();
 
 int main() {
-    makeInterrupt21();
-    terminate();
-    return 0;
+  /*char shell[6];
+  shell[0] = 's';
+  shell[1] = 'h';
+  shell[2] = 'e';
+  shell[3] = 'l';
+  shell[4] = 'l';
+  shell[5] = '\0';*/
+  currentProcess = 0;
+  initializeProcessTable();
+  makeInterrupt21();
+  interrupt(0x21, 4, shell, 0, 0);
+  makeTimerInterrupt();
+    /*terminate();*/
+  return 0;
 }
 
 void newline() {
     printString("\n****\n\n");
-} 
+}
 
 void printString(char* str) {
     int index = 0;
@@ -125,7 +146,7 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
     } else if(ax == 3) {
       readFile(bx, cx);
     } else if(ax == 4) {
-      executeProgram(bx, cx);
+      executeProgram(bx);
     } else if(ax == 5) {
       terminate();
     } else if(ax == 6) {
@@ -135,6 +156,28 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
     } else if(ax==8) {
     	writeFile(bx, cx, dx);
     }
+}
+
+void handleTimerInterrupt(int segment, int sp) {
+  int i;
+  int end;
+  int newSegment;
+  int newSP;
+  /*i = currentProcess;
+  printhex(segment);
+  processTable[currentProcess].stackPointer = sp;
+  /*while (i != 8) {
+    if (processTable[i].isActive) {
+      newSegment = (i + 2) * 0x1000;
+      newSP = processTable[i].stackPointer;
+      currentProcess = i;
+      returnFromTimer(newSegment, newSP);
+      return;
+    }
+    i++;
+    }*/
+  
+  returnFromTimer(segment, sp);
 }
 
 void readFile(char* fileName, char* buffer) {
@@ -206,19 +249,31 @@ void deleteFile(char* fileName) {
   }
 }
 
-void executeProgram(char* name, int segment) {
+void executeProgram(char* name) {
+  /* TODO: fix all executeProgram interrupts and calls */
     int i;
+    int segment;
     char buffer[13312];
     readFile(name, buffer);
+    setKernelDataSegment();
+    for (i = 0; i < 8; i++) {
+      printhex(i);
+      if (!processTable[i].isActive) {
+        segment = (i + 2) * 0x1000;
+        processTable[i].isActive = 1;
+        restoreDataSegment();
+        break;
+      }
+    }
 
     for (i = 0; i < 13312; i++) {        
         putInMemory(segment, i, buffer[i]);
     }
-    launchProgram(segment);
+    initializeProgram(segment);
 }
 
 void terminate() {
-    char shell[6];
+  /*char shell[6];
     shell[0] = 's';
     shell[1] = 'h';
     shell[2] = 'e';
@@ -226,7 +281,11 @@ void terminate() {
     shell[4] = 'l';
     shell[5] = '\0';
 
-    interrupt(0x21, 4, shell, 0x2000, 0);
+    interrupt(0x21, 4, shell, 0x2000, 0);*/
+  setKernelDataSegment();
+  processTable[currentProcess].isActive = 0;
+  while(1){
+  }
 }
 
 void writeFile(char* name, char* buffer, int numberOfSectors) {
@@ -282,7 +341,6 @@ void writeFile(char* name, char* buffer, int numberOfSectors) {
         writeSector(buffer, sector + 1);
         buffer += MAX_BUFFER_SIZE;
       }
-            /*}*/
       if (sector >= MAX_BUFFER_SIZE) {
         return;
       }
@@ -294,5 +352,17 @@ void writeFile(char* name, char* buffer, int numberOfSectors) {
     }
     writeSector(map, 1);
     writeSector(directory, 2);
+}
+
+void initializeProcessTable() {
+  int i;
+  int active;
+  int stackPointer;
+  active = 0;
+  stackPointer = 0xff00;
+  for (i = 0; i < 8; i++) {
+    processTable[i].isActive = active;
+    processTable[i].stackPointer = stackPointer;
+  }
 }
 
