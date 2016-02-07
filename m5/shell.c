@@ -1,0 +1,313 @@
+/* Morgan Cook, Josh Green, Philip Ross
+   Milestone 3
+   Team 1-F
+*/
+
+#define PRINT_STRING 0 /* args: char* */
+#define READ_STRING 1 /* args: char* */
+#define READ_SECTOR 2 /* args: char*, int */
+#define READ_FILE 3 /* args: char*, char* */
+#define EXECUTE_PROG 4 /* args: char*, int */
+#define TERMINATE 5
+#define WRITE_SECTOR 6 /* args: char*, int */
+#define DELETE_FILE 7 /* args: char* */
+#define WRITE_FILE 8 /* args: char* char* int */
+
+#define MAX_COMMAND_SIZE 80
+#define NUM_COMMANDS 10
+#define MAX_BUFFER_SIZE 13312
+#define BUFFER_INC 512
+
+#define TYPE_SIZE 5
+#define EXECUTE_SIZE 8
+#define DELETE_SIZE 7
+#define COPY_SIZE 5
+#define DIR_SIZE 4
+#define CREATE_SIZE 7
+
+int executeCommand(char *command);
+void getCommand(char *command, char *name);
+int getArg(char *command, char *arg, int i);
+int strEquals(char* str1, char* str2);
+void printDirectory();
+void createFile(char *filename);
+void fillType(char *arr);
+void fillExecute(char *arr);
+void fillDelete(char *arr);
+void fillCopy(char *arr);
+void fillDir(char *arr);
+void fillCreate(char *arr);
+char* itoa(int n, char* buffer);
+int mod(int a, int b);
+
+int main() {
+  char *command;
+  char shell[7];
+  char bad[4];
+  shell[0] = 's';
+  shell[1] = 'h';
+  shell[2] = 'e';
+  shell[3] = 'l';
+  shell[4] = 'l';
+  shell[5] = '>';
+  shell[6] = '\0';
+  bad[0] = 'b';
+  bad[1] = 'a';
+  bad[2] = 'd';
+  bad[3] = '\0';
+  while(1) {
+    interrupt(0x21, PRINT_STRING, shell, 0, 0);
+    interrupt(0x21, READ_STRING, command, 0, 0);
+    if (!executeCommand(command)) {
+      interrupt(0x21, PRINT_STRING, bad, 0, 0);
+    }
+  }
+}
+
+int executeCommand(char *command) {
+  int i = 0;
+  int numSectors = 0;
+  int bufferLocation = 0;
+  char name[MAX_COMMAND_SIZE];
+  char arg[MAX_COMMAND_SIZE];
+  char secondArg[MAX_COMMAND_SIZE];
+  char buffer[MAX_BUFFER_SIZE];
+  char type[TYPE_SIZE];
+  char execute[EXECUTE_SIZE];
+  char delete[DELETE_SIZE];
+  char copy[COPY_SIZE];
+  char dir[DIR_SIZE];
+  char create[CREATE_SIZE];
+  fillType(type);
+  fillExecute(execute);
+  fillDelete(delete);
+  fillCopy(copy);
+  fillDir(dir);
+  fillCreate(create);
+
+  getCommand(command, name);
+  if (strEquals(name, type)) {
+    i = TYPE_SIZE;
+    i = getArg(command, arg, i);
+    interrupt(0x21, READ_FILE, arg, buffer, 0);
+    interrupt(0x21, PRINT_STRING, buffer, 0, 0);
+    return 1;
+  } else if (strEquals(name, execute)) {
+    i = EXECUTE_SIZE;
+    i = getArg(command, arg, i);
+    interrupt(0x21, EXECUTE_PROG, arg, 0x2000, 0);
+    return 1;
+  } else if (strEquals(name, delete)) {
+    i = DELETE_SIZE;
+    i = getArg(command, arg, i);
+    interrupt(0x21, DELETE_FILE, arg, 0, 0);
+    return 1;
+  } else if (strEquals(name, copy)) {
+    i = COPY_SIZE;
+    i = getArg(command, arg, i);
+    i = getArg(command, secondArg, i);
+    interrupt(0x21, READ_FILE, arg, buffer, 0);
+
+    while(buffer[bufferLocation] != 0x00){
+      bufferLocation += BUFFER_INC;
+      numSectors++;
+    }
+    interrupt(0x21, WRITE_FILE, secondArg, buffer, numSectors);
+    return 1;
+  } else if (strEquals(name, dir)) {
+    printDirectory();
+    return 1;
+  } else if (strEquals(name, create)) {
+    i = CREATE_SIZE;
+    i = getArg(command, arg, i);
+    createFile(arg);
+    return 1;
+  }
+  return 0;
+}
+
+void getCommand(char *command, char *name) {
+  /* Given a full command string, returns the name of the command */
+  int i = 0;
+
+  while(command[i] != '\0' && command[i] != ' ') {
+    name[i] = command[i];
+    i++;
+  }
+  name[i] = '\0';
+}
+
+int getArg(char *command, char *arg, int i) {
+  /* Given a full command string, returns the location that it stopped */
+  int j = 0;
+
+  while(command[i] != '\0' && command[i] != ' ') {
+    arg[j] = command[i];
+    j++;
+    i++;
+  }
+  i++;
+  arg[j] = '\0';
+  return i;
+}
+
+int strEquals(char* str1, char* str2) {
+    int i = 0;
+    while(str1[i] != '\0' && str2[i] != '\0') {
+        if (str1[i] != str2[i]) {
+            return 0;
+        }
+        i++;
+    }
+    return str1[i] == '\0' && str2[i] == '\0';
+}
+
+void printDirectory() {
+  char directory[512];
+  char fileName[7];
+  char newline[2];
+  int index;
+  int i;
+  int size = 0;
+  char sizeStr[4];
+  newline[0] = '\n';
+  newline[1] = '\0';
+
+  interrupt(0x21, READ_SECTOR, directory, 2, 0);
+  
+  for (index = 0; index < 512; index += 32) {
+    size = 0;
+      for (i = 0; i < 6 && directory[index + i] != 0x00; i++) {
+      fileName[i] = directory[index + i];
+    }
+    fileName[i] = '\0';
+    while(i < 32 && directory[index + 6 + size] != 0x00) {
+        size++;
+    }
+
+    interrupt(0x21, PRINT_STRING, fileName, 0, 0);
+    if (fileName[0] != '\0') {
+        interrupt(0x21, PRINT_STRING, itoa(size, sizeStr), 0, 0);
+        interrupt(0x21, PRINT_STRING, newline, 0, 0);
+    }  
+  }
+}
+
+void createFile(char *filename) {
+  char file[MAX_BUFFER_SIZE];
+  char line[512];
+  int numSectors;
+  int i;
+  int index = 0;
+
+  while(1) {
+    interrupt(0x21, READ_STRING, line, 0, 0);
+    if (line[0] == 0x00) {
+      numSectors = countSectors(file);
+      interrupt(0x21, WRITE_FILE, filename, file, numSectors);
+      return;
+    } else {
+      index = cpyStr(line, file, index);
+      for (i = 0; i < 512; i++) {
+        line[i] = '\0';
+      }
+    }
+  }
+}
+
+int cpyStr(char *line, char *file, int index) {
+  /*Copies line into file, starting at index. Returns new index to start from*/
+  int i = 0;
+  while (line[i] != '\0' && i < 512) {
+    file[i + index] = line[i];
+    i++;
+  }
+  file[i + index] = '\n';
+  return index + i + 1;
+}
+
+int countSectors(char *file) {
+  int i;
+  int count = 0;
+  for(i = 0; i < MAX_BUFFER_SIZE; i += 512) {
+    if (file[i] == 0x00) {
+      return count;
+    } else {
+      count++;
+    }
+  }
+  return count;
+}
+
+void fillType(char *arr) {
+  arr[0] = 't';
+  arr[1] = 'y';
+  arr[2] = 'p';
+  arr[3] = 'e';
+  arr[4] = '\0';
+}
+
+void fillExecute(char *arr) {
+  arr[0] = 'e';
+  arr[1] = 'x';
+  arr[2] = 'e';
+  arr[3] = 'c';
+  arr[4] = 'u';
+  arr[5] = 't';
+  arr[6] = 'e';
+  arr[7] = '\0';
+}
+
+void fillDelete(char *arr) {
+  arr[0] = 'd';
+  arr[1] = 'e';
+  arr[2] = 'l';
+  arr[3] = 'e';
+  arr[4] = 't';
+  arr[5] = 'e';
+  arr[6] = '\0';
+}
+
+void fillCopy(char *arr) {
+  arr[0] = 'c';
+  arr[1] = 'o';
+  arr[2] = 'p';
+  arr[3] = 'y';
+  arr[4] = '\0';
+}
+
+void fillDir(char *arr) {
+  arr[0] = 'd';
+  arr[1] = 'i';
+  arr[2] = 'r';
+  arr[3] = '\0';
+}
+
+void fillCreate(char *arr) {
+  arr[0] = 'c';
+  arr[1] = 'r';
+  arr[2] = 'e';
+  arr[3] = 'a';
+  arr[4] = 't';
+  arr[5] = 'e';
+  arr[6] = '\0';
+}
+
+char* itoa(int n, char* buffer) {
+    buffer[0] = ' ';
+    buffer[1] = (mod(n, 100) / 10) + '0';
+    buffer[2] = mod(n, 10) + '0';
+    buffer[3] = '\0';
+    if (buffer[1] == '0') {
+        buffer[1] = buffer[2];
+        buffer[2] = buffer[3];
+    }
+    return buffer;
+}
+
+int mod(int a, int b) {
+    while (a >= b) {
+        a = a - b;
+    }
+    return a;
+}
