@@ -32,7 +32,7 @@ void readFile(char* fileName, char* buffer);
 void deleteFile(char* fileName);
 void executeProgram(char* name);
 void terminate();
-void killProcess(int proc);
+void killProcess(char *proc);
 void quitAll();
 void clearScreen();
 void writeFile(char* name, char* buffer, int numberOfSectors);
@@ -157,6 +157,7 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
     } else if(ax == 7) {
       deleteFile(bx);
     } else if(ax==8) {
+      printhex(ax);
     	writeFile(bx, cx, dx);
     } else if(ax == 9) {
       killProcess(bx);
@@ -267,7 +268,6 @@ void deleteFile(char* fileName) {
 }
 
 void executeProgram(char* name) {
-  /* TODO: fix all executeProgram interrupts and calls */
   int i, j;
     int segment;
     char buffer[13312];
@@ -300,9 +300,11 @@ void terminate() {
   while(1);
 }
 
-void killProcess(int proc) {
+void killProcess(char *proc) {
+  int pid;
+  pid = proc[0] - '0';
   setKernelDataSegment();
-  processTable[proc].isActive = 0;
+  processTable[pid].isActive = 0;
   restoreDataSegment();
 }
 

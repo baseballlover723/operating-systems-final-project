@@ -174,7 +174,7 @@ int executeCommand(char *command) {
   } else if (strEquals(name, execute)) {
     i = EXECUTE_SIZE;
     i = getArg(command, arg, i);
-    interrupt(0x21, EXECUTE_PROG, arg, 0x2000, 0);
+    interrupt(0x21, EXECUTE_PROG, arg, 0, 0);
     return 1;
   } else if (strEquals(name, delete)) {
     i = DELETE_SIZE;
