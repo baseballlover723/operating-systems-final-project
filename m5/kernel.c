@@ -32,6 +32,7 @@ void readFile(char* fileName, char* buffer);
 void deleteFile(char* fileName);
 void executeProgram(char* name);
 void terminate();
+void killProcess(int proc);
 void writeFile(char* name, char* buffer, int numberOfSectors);
 void initializeProcessTable();
 
@@ -155,6 +156,8 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
       deleteFile(bx);
     } else if(ax==8) {
     	writeFile(bx, cx, dx);
+    } else if(ax == 9) {
+      killProcess(bx);
     }
 }
 
@@ -289,6 +292,12 @@ void terminate() {
   processTable[currentProcess].isActive = 0;
   processTable[currentProcess].stackPointer = 0xff00;
   while(1);
+}
+
+void killProcess(int proc) {
+  setKernelDataSegment();
+  processTable[proc].isActive = 0;
+  restoreDataSegment();
 }
 
 void writeFile(char* name, char* buffer, int numberOfSectors) {

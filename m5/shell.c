@@ -7,11 +7,12 @@
 #define READ_STRING 1 /* args: char* */
 #define READ_SECTOR 2 /* args: char*, int */
 #define READ_FILE 3 /* args: char*, char* */
-#define EXECUTE_PROG 4 /* args: char*, int */
+#define EXECUTE_PROG 4 /* args: char* */
 #define TERMINATE 5
 #define WRITE_SECTOR 6 /* args: char*, int */
 #define DELETE_FILE 7 /* args: char* */
 #define WRITE_FILE 8 /* args: char* char* int */
+#define KILL_PROCESS 9 /* args: int */
 
 #define MAX_COMMAND_SIZE 80
 #define NUM_COMMANDS 10
@@ -24,6 +25,7 @@
 #define COPY_SIZE 5
 #define DIR_SIZE 4
 #define CREATE_SIZE 7
+#define KILL_SIZE 5
 
 int executeCommand(char *command);
 void getCommand(char *command, char *name);
@@ -37,6 +39,7 @@ void fillDelete(char *arr);
 void fillCopy(char *arr);
 void fillDir(char *arr);
 void fillCreate(char *arr);
+void fillKill(char *arr);
 char* itoa(int n, char* buffer);
 int mod(int a, int b);
 
@@ -79,12 +82,14 @@ int executeCommand(char *command) {
   char copy[COPY_SIZE];
   char dir[DIR_SIZE];
   char create[CREATE_SIZE];
+  char kill[KILL_SIZE];
   fillType(type);
   fillExecute(execute);
   fillDelete(delete);
   fillCopy(copy);
   fillDir(dir);
   fillCreate(create);
+  fillKill(kill);
 
   getCommand(command, name);
   if (strEquals(name, type)) {
@@ -122,6 +127,11 @@ int executeCommand(char *command) {
     i = CREATE_SIZE;
     i = getArg(command, arg, i);
     createFile(arg);
+    return 1;
+  } else if (strEquals(name, kill)) {
+    i = KILL_SIZE;
+    i = getArg(command, arg, i);
+    interrupt(0x21, KILL_PROCESS, arg, 0, 0);
     return 1;
   }
   return 0;
@@ -292,6 +302,14 @@ void fillCreate(char *arr) {
   arr[4] = 't';
   arr[5] = 'e';
   arr[6] = '\0';
+}
+
+void fillKill(char *arr) {
+  arr[0] = 'k';
+  arr[1] = 'i';
+  arr[2] = 'l';
+  arr[3] = 'l';
+  arr[4] = '\0';
 }
 
 char* itoa(int n, char* buffer) {
