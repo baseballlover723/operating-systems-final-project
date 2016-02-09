@@ -48,8 +48,7 @@ int main() {
   makeInterrupt21();
   makeTimerInterrupt();
   interrupt(0x21, 4, shell, 0, 0);
-  while(1) {}
-    /*terminate();*/
+  while(1);
   return 0;
 }
 
@@ -169,25 +168,12 @@ void handleTimerInterrupt(int segment, int sp) {
   if (segCheck == currentProcess) {
     processTable[currentProcess].stackPointer = sp;
   }
-  /*i = 8
-  while (i != 8) {
-    printhex(i);
-    if (processTable[i].isActive) {
-      newSegment = (i + 2) * 0x1000;
-      newSP = processTable[i].stackPointer;
-      currentProcess = i;
-      returnFromTimer(newSegment, newSP);
-      return;
-    }
-    i++;
-    }*/
   for (i = currentProcess+1; i < 8; i++) {
     if (processTable[i].isActive) {
       newSegment = (i + 2) * 0x1000;
       newSP = processTable[i].stackPointer;
       currentProcess = i;
       returnFromTimer(newSegment, newSP);
-      return;
     }
   }
   for (i = 0; i <= currentProcess; i++) {
@@ -196,7 +182,6 @@ void handleTimerInterrupt(int segment, int sp) {
       newSP = processTable[i].stackPointer;
       currentProcess = i;
       returnFromTimer(newSegment, newSP);
-      return;
     }
   }
   
@@ -274,40 +259,36 @@ void deleteFile(char* fileName) {
 
 void executeProgram(char* name) {
   /* TODO: fix all executeProgram interrupts and calls */
-    int i;
+  int i, j;
     int segment;
     char buffer[13312];
     readFile(name, buffer);
     setKernelDataSegment();
     for (i = 0; i < 8; i++) {
       if (!processTable[i].isActive) {
-        segment = (i + 2) * 0x1000;
-        processTable[i].isActive = 1;
+        processTable[i].stackPointer = 0xff00;
         break;
       }
     }
     restoreDataSegment();
 
-    for (i = 0; i < 13312; i++) {        
-        putInMemory(segment, i, buffer[i]);
+    for (j = 0; j < 13312; j++) {        
+      putInMemory((i + 2) * 0x1000, j, buffer[j]);
     }
-    initializeProgram(segment);
+    if (i != 8) {
+      initializeProgram((i + 2) * 0x1000);
+    }
+    setKernelDataSegment();
+    processTable[i].isActive = 1;
+    restoreDataSegment();
+    /*terminate();*/
 }
 
 void terminate() {
-  /*char shell[6];
-    shell[0] = 's';
-    shell[1] = 'h';
-    shell[2] = 'e';
-    shell[3] = 'l';
-    shell[4] = 'l';
-    shell[5] = '\0';
-
-    interrupt(0x21, 4, shell, 0x2000, 0);*/
   setKernelDataSegment();
   processTable[currentProcess].isActive = 0;
-  while(1){
-  }
+  processTable[currentProcess].stackPointer = 0xff00;
+  while(1);
 }
 
 void writeFile(char* name, char* buffer, int numberOfSectors) {
