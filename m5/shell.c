@@ -13,6 +13,8 @@
 #define DELETE_FILE 7 /* args: char* */
 #define WRITE_FILE 8 /* args: char* char* int */
 #define KILL_PROCESS 9 /* args: int */
+#define QUIT 10
+#define CLEAR 11
 
 #define MAX_COMMAND_SIZE 80
 #define NUM_COMMANDS 10
@@ -26,6 +28,9 @@
 #define DIR_SIZE 4
 #define CREATE_SIZE 7
 #define KILL_SIZE 5
+#define QUIT_SIZE 5
+#define CLEAR_SIZE 6
+#define HELP_SIZE 5
 
 int executeCommand(char *command);
 void getCommand(char *command, char *name);
@@ -40,6 +45,9 @@ void fillCopy(char *arr);
 void fillDir(char *arr);
 void fillCreate(char *arr);
 void fillKill(char *arr);
+void fillQuit(char *arr);
+void fillClear(char *arr);
+void fillHelp(char *arr);
 char* itoa(int n, char* buffer);
 int mod(int a, int b);
 
@@ -72,6 +80,7 @@ int executeCommand(char *command) {
   int i = 0;
   int numSectors = 0;
   int bufferLocation = 0;
+  char newline[2];
   char name[MAX_COMMAND_SIZE];
   char arg[MAX_COMMAND_SIZE];
   char secondArg[MAX_COMMAND_SIZE];
@@ -83,6 +92,11 @@ int executeCommand(char *command) {
   char dir[DIR_SIZE];
   char create[CREATE_SIZE];
   char kill[KILL_SIZE];
+  char quit[QUIT_SIZE];
+  char clear[CLEAR_SIZE];
+  char help[HELP_SIZE];
+  newline[0] = '\n';
+  newline[1] = '\0';
   fillType(type);
   fillExecute(execute);
   fillDelete(delete);
@@ -90,6 +104,9 @@ int executeCommand(char *command) {
   fillDir(dir);
   fillCreate(create);
   fillKill(kill);
+  fillQuit(quit);
+  fillClear(clear);
+  fillHelp(help);
 
   getCommand(command, name);
   if (strEquals(name, type)) {
@@ -132,6 +149,30 @@ int executeCommand(char *command) {
     i = KILL_SIZE;
     i = getArg(command, arg, i);
     interrupt(0x21, KILL_PROCESS, arg, 0, 0);
+    return 1;
+  } else if (strEquals(name, quit)) {
+    interrupt(0x21, QUIT, 0, 0, 0);
+    return 1;
+  } else if (strEquals(name, clear)) {
+    interrupt(0x21, CLEAR, 0, 0, 0);
+    return 1;
+  } else if (strEquals(name, help)) {
+    interrupt(0x21, PRINT_STRING, type, 0, 0);
+    interrupt(0x21, PRINT_STRING, newline, 0, 0);
+    interrupt(0x21, PRINT_STRING, execute, 0, 0);
+    interrupt(0x21, PRINT_STRING, newline, 0, 0);
+    interrupt(0x21, PRINT_STRING, delete, 0, 0);
+    interrupt(0x21, PRINT_STRING, newline, 0, 0);
+    interrupt(0x21, PRINT_STRING, copy, 0, 0);
+    interrupt(0x21, PRINT_STRING, newline, 0, 0);
+    interrupt(0x21, PRINT_STRING, dir, 0, 0);
+    interrupt(0x21, PRINT_STRING, newline, 0, 0);
+    interrupt(0x21, PRINT_STRING, kill, 0, 0);
+    interrupt(0x21, PRINT_STRING, newline, 0, 0);
+    interrupt(0x21, PRINT_STRING, quit, 0, 0);
+    interrupt(0x21, PRINT_STRING, newline, 0, 0);
+    interrupt(0x21, PRINT_STRING, clear, 0, 0);
+    interrupt(0x21, PRINT_STRING, newline, 0, 0);
     return 1;
   }
   return 0;
@@ -309,6 +350,31 @@ void fillKill(char *arr) {
   arr[1] = 'i';
   arr[2] = 'l';
   arr[3] = 'l';
+  arr[4] = '\0';
+}
+
+void fillQuit(char *arr) {
+  arr[0] = 'q';
+  arr[1] = 'u';
+  arr[2] = 'i';
+  arr[3] = 't';
+  arr[4] = '\0';
+}
+
+void fillClear(char *arr) {
+  arr[0] = 'c';
+  arr[1] = 'l';
+  arr[2] = 'e';
+  arr[3] = 'a';
+  arr[4] = 'r';
+  arr[5] = '\0';
+}
+
+void fillHelp(char *arr) {
+  arr[0] = 'h';
+  arr[1] = 'e';
+  arr[2] = 'l';
+  arr[3] = 'p';
   arr[4] = '\0';
 }
 

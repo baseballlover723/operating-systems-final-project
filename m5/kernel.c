@@ -33,6 +33,8 @@ void deleteFile(char* fileName);
 void executeProgram(char* name);
 void terminate();
 void killProcess(int proc);
+void quitAll();
+void clearScreen();
 void writeFile(char* name, char* buffer, int numberOfSectors);
 void initializeProcessTable();
 
@@ -158,6 +160,10 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
     	writeFile(bx, cx, dx);
     } else if(ax == 9) {
       killProcess(bx);
+    } else if(ax == 10) {
+      quitAll();
+    } else if(ax == 11) {
+      clearScreen();
     }
 }
 
@@ -298,6 +304,26 @@ void killProcess(int proc) {
   setKernelDataSegment();
   processTable[proc].isActive = 0;
   restoreDataSegment();
+}
+
+void quitAll() {
+  /* Sets all processes to inactive */
+  int i;
+  setKernelDataSegment();
+  for (i = 0; i < 8; i++) {
+    processTable[i].isActive = 0;
+  }
+  terminate();
+}
+
+void clearScreen() {
+  char newline[2];
+  int i;
+  newline[0] = '\n';
+  newline[1] = '\0';
+  for (i = 0; i < 100; i++) {
+    printString(newline);
+  }
 }
 
 void writeFile(char* name, char* buffer, int numberOfSectors) {
