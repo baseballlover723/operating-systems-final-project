@@ -36,18 +36,19 @@ void writeFile(char* name, char* buffer, int numberOfSectors);
 void initializeProcessTable();
 
 int main() {
-  /*char shell[6];
+  char shell[6];
   shell[0] = 's';
   shell[1] = 'h';
   shell[2] = 'e';
   shell[3] = 'l';
   shell[4] = 'l';
-  shell[5] = '\0';*/
+  shell[5] = '\0';
   currentProcess = 0;
   initializeProcessTable();
   makeInterrupt21();
-  interrupt(0x21, 4, shell, 0, 0);
   makeTimerInterrupt();
+  interrupt(0x21, 4, shell, 0, 0);
+  while(1) {}
     /*terminate();*/
   return 0;
 }
@@ -163,10 +164,14 @@ void handleTimerInterrupt(int segment, int sp) {
   int end;
   int newSegment;
   int newSP;
-  /*i = currentProcess;
-  printhex(segment);
-  processTable[currentProcess].stackPointer = sp;
-  /*while (i != 8) {
+  int segCheck;
+  segCheck = (segment / 0x1000) - 2;
+  if (segCheck == currentProcess) {
+    processTable[currentProcess].stackPointer = sp;
+  }
+  /*i = 8
+  while (i != 8) {
+    printhex(i);
     if (processTable[i].isActive) {
       newSegment = (i + 2) * 0x1000;
       newSP = processTable[i].stackPointer;
@@ -176,6 +181,24 @@ void handleTimerInterrupt(int segment, int sp) {
     }
     i++;
     }*/
+  for (i = currentProcess+1; i < 8; i++) {
+    if (processTable[i].isActive) {
+      newSegment = (i + 2) * 0x1000;
+      newSP = processTable[i].stackPointer;
+      currentProcess = i;
+      returnFromTimer(newSegment, newSP);
+      return;
+    }
+  }
+  for (i = 0; i <= currentProcess; i++) {
+    if (processTable[i].isActive) {
+      newSegment = (i + 2) * 0x1000;
+      newSP = processTable[i].stackPointer;
+      currentProcess = i;
+      returnFromTimer(newSegment, newSP);
+      return;
+    }
+  }
   
   returnFromTimer(segment, sp);
 }
@@ -257,14 +280,13 @@ void executeProgram(char* name) {
     readFile(name, buffer);
     setKernelDataSegment();
     for (i = 0; i < 8; i++) {
-      printhex(i);
       if (!processTable[i].isActive) {
         segment = (i + 2) * 0x1000;
         processTable[i].isActive = 1;
-        restoreDataSegment();
         break;
       }
     }
+    restoreDataSegment();
 
     for (i = 0; i < 13312; i++) {        
         putInMemory(segment, i, buffer[i]);
