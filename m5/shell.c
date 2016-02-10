@@ -15,6 +15,7 @@
 #define KILL_PROCESS 9 /* args: int */
 #define QUIT 10
 #define CLEAR 11
+#define EXEC_FOREGROUND 12 /* args: char* */
 
 #define MAX_COMMAND_SIZE 80
 #define NUM_COMMANDS 10
@@ -31,6 +32,7 @@
 #define QUIT_SIZE 5
 #define CLEAR_SIZE 6
 #define HELP_SIZE 5
+#define EXEC_FOREGROUND_SIZE 15
 
 int executeCommand(char *command);
 void getCommand(char *command, char *name);
@@ -48,6 +50,7 @@ void fillKill(char *arr);
 void fillQuit(char *arr);
 void fillClear(char *arr);
 void fillHelp(char *arr);
+void fillExecForeground(char *arr);
 char* itoa(int n, char* buffer);
 int mod(int a, int b);
 
@@ -151,6 +154,7 @@ int executeCommand(char *command) {
   char quit[QUIT_SIZE];
   char clear[CLEAR_SIZE];
   char help[HELP_SIZE];
+  char execForeground[EXEC_FOREGROUND_SIZE];
   newline[0] = '\n';
   newline[1] = '\0';
   fillType(type);
@@ -163,6 +167,7 @@ int executeCommand(char *command) {
   fillQuit(quit);
   fillClear(clear);
   fillHelp(help);
+  fillExecForeground(execForeground);
 
   getCommand(command, name);
   if (strEquals(name, type)) {
@@ -229,7 +234,13 @@ int executeCommand(char *command) {
     interrupt(0x21, PRINT_STRING, newline, 0, 0);
     interrupt(0x21, PRINT_STRING, clear, 0, 0);
     interrupt(0x21, PRINT_STRING, newline, 0, 0);
+    interrupt(0x21, PRINT_STRING, execForeground, 0, 0);
+    interrupt(0x21, PRINT_STRING, newline, 0, 0);
     return 1;
+  } else if (strEquals(name, execForeground)) {
+    i = EXEC_FOREGROUND_SIZE;
+    i = getArg(command, arg, i);
+    interrupt(0x21, EXEC_FOREGROUND, arg, 0, 0); 
   }
   return 0;
 }
@@ -432,6 +443,24 @@ void fillHelp(char *arr) {
   arr[2] = 'l';
   arr[3] = 'p';
   arr[4] = '\0';
+}
+
+void fillExecForeground(char *arr) {
+  arr[0] = 'e';
+  arr[1] = 'x';
+  arr[2] = 'e';
+  arr[3] = 'c';
+  arr[4] = 'f';
+  arr[5] = 'o';
+  arr[6] = 'r';
+  arr[7] = 'e';
+  arr[8] = 'g';
+  arr[9] = 'r';
+  arr[10] = 'o';
+  arr[11] = 'u';
+  arr[12] = 'n';
+  arr[13] = 'd';
+  arr[14] = '\0';
 }
 
 char* itoa(int n, char* buffer) {
