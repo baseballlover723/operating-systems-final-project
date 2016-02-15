@@ -160,7 +160,6 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
     } else if(ax == 7) {
       deleteFile(bx);
     } else if(ax==8) {
-      printhex(ax);
     	writeFile(bx, cx, dx);
     } else if(ax == 9) {
       killProcess(bx);
